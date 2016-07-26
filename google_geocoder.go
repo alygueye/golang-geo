@@ -246,3 +246,43 @@ func (g *GoogleGeocoder) ReverseGeocode(p *Point) (string, error) {
 func googleReverseGeocodeQueryStr(p *Point) string {
 	return fmt.Sprintf("latlng=%f,%f", p.lat, p.lng)
 }
+
+// Reverse geocodes the pointer to a Point struct and returns the first address that matches
+// or returns an error if the underlying request cannot complete.
+func (g *GoogleGeocoder) ReverseGeocodeAddressComponents(p *Point) ([]*AddressComponent, error) {
+	params := googleReverseGeocodeQueryStr(p)
+
+	queryStr, err := g.googleFormattedRequestStr(params)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := g.Request(queryStr)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &googleReverseGeocodeAddressComponentResponse{}
+	err = json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res.Results) == 0 {
+		return nil, googleZeroResultsError
+	}
+
+	return res.Results[0].AddressComponents, err
+}
+
+type googleReverseGeocodeAddressComponentResponse struct {
+	Results []struct {
+		AddressComponents []*AddressComponent `json:"address_components"`
+	}
+}
+
+type AddressComponent struct {
+	LongName  string   `json:"long_name"`
+	ShortName string   `json:"short_name"`
+	Types     []string `json:"types"`
+}
