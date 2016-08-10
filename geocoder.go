@@ -7,3 +7,7 @@ type Geocoder interface {
 	Geocode(query string) (*Point, error)
 	ReverseGeocode(p *Point) (string, error)
 }
+
+type AddressComponentsGeocoder interface {
+	ReverseGeocodeAddressComponents(p *Point) ([]*AddressComponent, error)
+}
